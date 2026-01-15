@@ -59,9 +59,9 @@ class TaskConfig(GenerationConfig):
     )
     
     dot_radius: int = Field(
-        default=8,
+        default=12,
         ge=5,
-        le=20,
+        le=30,
         description="Radius of each dot in pixels"
     )
     
