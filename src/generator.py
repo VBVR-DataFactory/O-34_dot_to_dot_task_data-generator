@@ -203,7 +203,7 @@ class TaskGenerator(BaseGenerator):
             
             # Draw number label if enabled
             if self.config.show_numbers:
-                font = self._get_font(size=max(16, self.config.dot_radius * 2))
+                font = self._get_font(size=max(32, self.config.dot_radius * 3))
                 text = str(dot_number)
                 bbox = draw.textbbox((0, 0), text, font=font)
                 text_width = bbox[2] - bbox[0]
@@ -256,7 +256,7 @@ class TaskGenerator(BaseGenerator):
             
             # Draw number label if enabled
             if self.config.show_numbers:
-                font = self._get_font(size=max(16, self.config.dot_radius * 2))
+                font = self._get_font(size=max(32, self.config.dot_radius * 3))
                 text = str(dot_number)
                 bbox = draw.textbbox((0, 0), text, font=font)
                 text_width = bbox[2] - bbox[0]
@@ -417,7 +417,7 @@ class TaskGenerator(BaseGenerator):
                 )
                 
                 if self.config.show_numbers:
-                    font = self._get_font(size=max(16, self.config.dot_radius * 2))
+                    font = self._get_font(size=max(32, self.config.dot_radius * 3))
                     text = str(dot_number)
                     bbox = draw.textbbox((0, 0), text, font=font)
                     text_width = bbox[2] - bbox[0]
