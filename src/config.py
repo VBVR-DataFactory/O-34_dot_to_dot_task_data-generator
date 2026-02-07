@@ -31,7 +31,7 @@ class TaskConfig(GenerationConfig):
     # ══════════════════════════════════════════════════════════════════════════
     
     domain: str = Field(default="dot_to_dot")
-    image_size: tuple[int, int] = Field(default=(512, 512))
+    image_size: tuple[int, int] = Field(default=(1024, 1024))
     
     # ══════════════════════════════════════════════════════════════════════════
     #  VIDEO SETTINGS
