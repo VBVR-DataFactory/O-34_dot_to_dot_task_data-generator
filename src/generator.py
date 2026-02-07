@@ -68,7 +68,12 @@ class TaskGenerator(BaseGenerator):
     
     def _generate_task_data(self) -> dict:
         """Generate random dots and determine connection order."""
-        num_dots = self.config.num_dots
+        # Determine number of dots
+        if self.config.use_random_num_dots:
+            num_dots = random.randint(self.config.min_dots, self.config.max_dots)
+        else:
+            num_dots = self.config.num_dots
+        
         width, height = self.config.image_size
         
         # Generate random points with padding to avoid edges
@@ -107,15 +112,31 @@ class TaskGenerator(BaseGenerator):
         # Determine connection order based on connection_type
         connection_order = self._determine_connection_order(points)
         
+        # Assign colors to dots
+        dot_colors = self._assign_dot_colors(num_dots)
+        
         return {
             "points": points,
             "connection_order": connection_order,
             "connection_type": self.config.connection_type,
             "num_dots": num_dots,
-            "dot_color": self.config.dot_color,
+            "dot_colors": dot_colors,  # Now a list of colors, one per dot
             "line_color": self.config.line_color,
             "background_color": self.config.background_color,
         }
+    
+    def _assign_dot_colors(self, num_dots: int) -> List[Tuple[int, int, int]]:
+        """Assign colors to dots based on configuration."""
+        if self.config.use_multiple_dot_colors and hasattr(self.config, 'dot_color_palette'):
+            # Use color palette - randomly assign colors
+            colors = []
+            palette = self.config.dot_color_palette
+            for _ in range(num_dots):
+                colors.append(random.choice(palette))
+            return colors
+        else:
+            # Use single color for all dots
+            return [self.config.dot_color] * num_dots
     
     def _determine_connection_order(self, points: List[Tuple[int, int]]) -> List[int]:
         """Determine the order in which dots should be connected."""
@@ -186,24 +207,30 @@ class TaskGenerator(BaseGenerator):
         
         points = task_data["points"]
         connection_order = task_data["connection_order"]
+        dot_colors = task_data["dot_colors"]
         
         # Draw dots
         for idx, (x, y) in enumerate(points):
             # Find the number label for this dot
             dot_number = connection_order.index(idx) + 1
             
+            # Get color for this dot
+            dot_color = dot_colors[idx]
+            
             # Draw dot circle
             draw.ellipse(
                 [x - self.config.dot_radius, y - self.config.dot_radius,
                  x + self.config.dot_radius, y + self.config.dot_radius],
-                fill=self.config.dot_color,
+                fill=dot_color,
                 outline=(0, 0, 0),
-                width=2
+                width=3
             )
             
             # Draw number label if enabled
             if self.config.show_numbers:
-                font = self._get_font(size=max(40, int(self.config.dot_radius * 2.5)))
+                # Calculate font size to fit within dot (about 60% of diameter)
+                font_size = int(self.config.dot_radius * 1.2)
+                font = self._get_font(size=font_size)
                 text = str(dot_number)
                 bbox = draw.textbbox((0, 0), text, font=font)
                 text_width = bbox[2] - bbox[0]
@@ -213,13 +240,12 @@ class TaskGenerator(BaseGenerator):
                 text_x = x - text_width // 2
                 text_y = y - text_height // 2
                 
-                # Draw text with outline for visibility
-                for dx in (-1, 0, 1):
-                    for dy in (-1, 0, 1):
-                        if dx == 0 and dy == 0:
-                            continue
-                        draw.text((text_x + dx, text_y + dy), text, font=font, fill=(255, 255, 255))
-                draw.text((text_x, text_y), text, font=font, fill=(0, 0, 0))
+                # Get number color from config, default to white
+                number_color = getattr(self.config, 'number_color', (255, 255, 255))
+                
+                # Draw text with slight shadow for better visibility
+                draw.text((text_x + 2, text_y + 2), text, font=font, fill=(0, 0, 0))
+                draw.text((text_x, text_y), text, font=font, fill=number_color)
         
         return img
     
@@ -230,6 +256,7 @@ class TaskGenerator(BaseGenerator):
         
         points = task_data["points"]
         connection_order = task_data["connection_order"]
+        dot_colors = task_data["dot_colors"]
         
         # Draw connecting lines first (so dots appear on top)
         for i in range(len(connection_order) - 1):
@@ -245,18 +272,23 @@ class TaskGenerator(BaseGenerator):
             # Find the number label for this dot
             dot_number = connection_order.index(idx) + 1
             
+            # Get color for this dot
+            dot_color = dot_colors[idx]
+            
             # Draw dot circle
             draw.ellipse(
                 [x - self.config.dot_radius, y - self.config.dot_radius,
                  x + self.config.dot_radius, y + self.config.dot_radius],
-                fill=self.config.dot_color,
+                fill=dot_color,
                 outline=(0, 0, 0),
-                width=2
+                width=3
             )
             
             # Draw number label if enabled
             if self.config.show_numbers:
-                font = self._get_font(size=max(40, int(self.config.dot_radius * 2.5)))
+                # Calculate font size to fit within dot (about 60% of diameter)
+                font_size = int(self.config.dot_radius * 1.2)
+                font = self._get_font(size=font_size)
                 text = str(dot_number)
                 bbox = draw.textbbox((0, 0), text, font=font)
                 text_width = bbox[2] - bbox[0]
@@ -266,13 +298,12 @@ class TaskGenerator(BaseGenerator):
                 text_x = x - text_width // 2
                 text_y = y - text_height // 2
                 
-                # Draw text with outline for visibility
-                for dx in (-1, 0, 1):
-                    for dy in (-1, 0, 1):
-                        if dx == 0 and dy == 0:
-                            continue
-                        draw.text((text_x + dx, text_y + dy), text, font=font, fill=(255, 255, 255))
-                draw.text((text_x, text_y), text, font=font, fill=(0, 0, 0))
+                # Get number color from config, default to white
+                number_color = getattr(self.config, 'number_color', (255, 255, 255))
+                
+                # Draw text with slight shadow for better visibility
+                draw.text((text_x + 2, text_y + 2), text, font=font, fill=(0, 0, 0))
+                draw.text((text_x, text_y), text, font=font, fill=number_color)
         
         return img
     
@@ -282,6 +313,7 @@ class TaskGenerator(BaseGenerator):
             # Try to load a system font
             font_paths = [
                 "/System/Library/Fonts/Supplemental/Arial.ttf",
+                "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
                 "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
                 "/Library/Fonts/Arial.ttf",
             ]
@@ -378,6 +410,7 @@ class TaskGenerator(BaseGenerator):
         frames = []
         points = task_data["points"]
         connection_order = task_data["connection_order"]
+        dot_colors = task_data["dot_colors"]
         
         x1, y1 = points[from_idx]
         x2, y2 = points[to_idx]
@@ -407,17 +440,19 @@ class TaskGenerator(BaseGenerator):
             # Draw all dots
             for idx, (x, y) in enumerate(points):
                 dot_number = connection_order.index(idx) + 1
+                dot_color = dot_colors[idx]
                 
                 draw.ellipse(
                     [x - self.config.dot_radius, y - self.config.dot_radius,
                      x + self.config.dot_radius, y + self.config.dot_radius],
-                    fill=self.config.dot_color,
+                    fill=dot_color,
                     outline=(0, 0, 0),
-                    width=2
+                    width=3
                 )
                 
                 if self.config.show_numbers:
-                    font = self._get_font(size=max(40, int(self.config.dot_radius * 2.5)))
+                    font_size = int(self.config.dot_radius * 1.2)
+                    font = self._get_font(size=font_size)
                     text = str(dot_number)
                     bbox = draw.textbbox((0, 0), text, font=font)
                     text_width = bbox[2] - bbox[0]
@@ -425,12 +460,9 @@ class TaskGenerator(BaseGenerator):
                     text_x = x - text_width // 2
                     text_y = y - text_height // 2
                     
-                    for dx in (-1, 0, 1):
-                        for dy in (-1, 0, 1):
-                            if dx == 0 and dy == 0:
-                                continue
-                            draw.text((text_x + dx, text_y + dy), text, font=font, fill=(255, 255, 255))
-                    draw.text((text_x, text_y), text, font=font, fill=(0, 0, 0))
+                    number_color = getattr(self.config, 'number_color', (255, 255, 255))
+                    draw.text((text_x + 2, text_y + 2), text, font=font, fill=(0, 0, 0))
+                    draw.text((text_x, text_y), text, font=font, fill=number_color)
             
             frames.append(img)
         
