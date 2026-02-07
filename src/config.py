@@ -43,7 +43,7 @@ class TaskConfig(GenerationConfig):
     )
     
     video_fps: int = Field(
-        default=10,
+        default=16,
         description="Video frame rate"
     )
     
@@ -59,14 +59,14 @@ class TaskConfig(GenerationConfig):
     )
     
     dot_radius: int = Field(
-        default=12,
+        default=28,
         ge=5,
         le=30,
         description="Radius of each dot in pixels"
     )
     
     line_width: int = Field(
-        default=3,
+        default=5,
         ge=2,
         le=5,
         description="Width of connecting lines"

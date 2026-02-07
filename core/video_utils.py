@@ -37,17 +37,21 @@ class VideoGenerator:
         self.fps = fps
         self.output_format = output_format
         
-        # Use H.264 for mp4 (better compatibility) or XVID for avi
+        # Use H.264 codec with fallback for maximum compatibility
         if output_format == "mp4":
-            self.codec = 'mp4v'  # Most compatible mp4 codec
+            # Try H.264 variants in order of preference
+            # avc1: Best compatibility (Apple/web)
+            # H264: Standard notation
+            # X264: Open-source implementation
+            # mp4v: Fallback (MPEG-4 Part 2)
+            self.codecs = ['avc1', 'H264', 'X264', 'mp4v']
             self.extension = '.mp4'
         else:
-            self.codec = 'XVID'
+            self.codecs = ['XVID']
             self.extension = '.avi'
         
         if not CV2_AVAILABLE:
             raise ImportError("opencv-python is required for video generation")
-    
     @staticmethod
     def is_available() -> bool:
         """Check if video generation is available."""
@@ -84,32 +88,55 @@ class VideoGenerator:
         output_path = output_path.with_suffix(self.extension)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
-        # Initialize video writer
-        fourcc = cv2.VideoWriter_fourcc(*self.codec)
+        # Try codecs in order until one works
+        writer = None
+        successful_codec = None
         
-        writer = cv2.VideoWriter(
-            str(output_path),
-            fourcc,
-            self.fps,
-            (width, height)
-        )
+        for codec in self.codecs:
+            try:
+                fourcc = cv2.VideoWriter_fourcc(*codec)
+                writer = cv2.VideoWriter(
+                    str(output_path),
+                    fourcc,
+                    self.fps,
+                    (width, height)
+                )
+                
+                # Test if writer is actually working
+                if writer.isOpened():
+                    successful_codec = codec
+                    break
+                else:
+                    writer.release()
+                    writer = None
+            except Exception:
+                if writer:
+                    writer.release()
+                writer = None
+                continue
+        
+        if not writer or not writer.isOpened():
+            raise RuntimeError(
+                f"Failed to create video writer with any codec: {self.codecs}"
+            )
         
         # Write frames
-        for frame in frames:
-            # Ensure RGB and correct size
-            if frame.size != size:
-                frame = frame.resize(size, Image.Resampling.LANCZOS)
-            
-            # Convert PIL Image to OpenCV format (BGR)
-            frame_rgb = frame.convert('RGB')
-            frame_array = np.array(frame_rgb)
-            frame_bgr = cv2.cvtColor(frame_array, cv2.COLOR_RGB2BGR)
-            
-            writer.write(frame_bgr)
+        try:
+            for frame in frames:
+                # Ensure RGB and correct size
+                if frame.size != size:
+                    frame = frame.resize(size, Image.Resampling.LANCZOS)
+                
+                # Convert PIL Image to OpenCV format (BGR)
+                frame_rgb = frame.convert('RGB')
+                frame_array = np.array(frame_rgb)
+                frame_bgr = cv2.cvtColor(frame_array, cv2.COLOR_RGB2BGR)
+                
+                writer.write(frame_bgr)
+        finally:
+            writer.release()
         
-        writer.release()
         return output_path
-    
     def create_crossfade_video(
         self,
         start_image: Image.Image,
