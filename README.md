@@ -1,248 +1,138 @@
-# Dot-to-Dot Task Data Generator 🔗
+# O-34: Dot-to-Dot Task Data Generator
 
-A synthetic data generator for creating dot-to-dot connection tasks for video model evaluation and reasoning tasks. Generates puzzles where numbered dots need to be connected in a specific order, along with solution videos and prompts.
+Generates synthetic sequential reasoning tasks where numbered dots need to be connected in numerical order. The task requires drawing straight lines between consecutive dots to complete the pattern.
 
-This task generator follows the [template-data-generator](https://github.com/vm-dataset/template-data-generator.git) format and is compatible with [VMEvalKit](https://github.com/Video-Reason/VMEvalKit.git).
-
-Repository: [O-34_dot_to_dot_task_data_generator](https://github.com/vm-dataset/O-34_dot_to_dot_task_data_generator)
+Each sample pairs a **task** (first frame + prompt describing what needs to happen) with its **ground truth solution** (final frame showing the result + video demonstrating how to achieve it). This structure enables both model evaluation and training.
 
 ---
 
-## 📋 About Dot-to-Dot Tasks
+## 📌 Basic Information
 
-Dot-to-dot tasks are reasoning puzzles where numbered dots are arranged on a canvas, and the task is to connect them in numerical order by drawing lines between consecutive points. This generator creates:
-
-- **Initial state images**: Dots numbered 1, 2, 3... arranged on a canvas
-- **Final state images**: The same dots with lines connecting them in order
-- **Solution videos**: Animated videos showing the connection process step-by-step
-- **Task prompts**: Natural language instructions for completing the task
-
-These tasks are useful for:
-- Evaluating visual reasoning capabilities in AI models
-- Training video prediction models
-- Testing sequential reasoning and planning abilities
-- Creating educational puzzles and games
+| Property | Value |
+|----------|-------|
+| **Task ID** | O-34 |
+| **Task** | Dot-to-Dot Connection |
+| **Category** | Sequential Reasoning/Pattern Completion |
+| **Resolution** | 1024×1024 px |
+| **FPS** | 16 fps |
+| **Duration** | Variable |
+| **Output** | PNG images + MP4 video |
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Usage
+
+### Installation
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/vm-dataset/O-34_dot_to_dot_task_data_generator.git
-cd O-34_dot_to_dot_task_data_generator
+# Clone the repository
+git clone https://github.com/VBVR-DataFactory/O-34_dot_to_dot_task_data-generator.git
+cd O-34_dot_to_dot_task_data-generator
 
-# 2. Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# 3. Install dependencies
-pip install --upgrade pip
+# Install dependencies
 pip install -r requirements.txt
-pip install -e .
-
-# 4. Generate dot-to-dot tasks
-python examples/generate.py --num-samples 50
 ```
 
----
-
-## 📁 Project Structure
-
-```
-dot-to-dot-generator/
-├── core/                    # Core utilities and base classes
-│   ├── base_generator.py   # Abstract base generator class
-│   ├── schemas.py          # Pydantic data models
-│   ├── image_utils.py      # Image rendering utilities
-│   ├── video_utils.py      # Video generation utilities
-│   └── output_writer.py    # File output handler
-├── src/                     # Dot-to-dot task implementation
-│   ├── generator.py        # Dot-to-dot task generator
-│   ├── prompts.py          # Task instruction prompts
-│   └── config.py           # Configuration settings
-├── examples/
-│   └── generate.py         # Command-line entry point
-└── data/questions/         # Generated output directory
-```
-
----
-
-## 📦 Output Format
-
-Each generated task produces a directory with the following files:
-
-```
-data/questions/dot_to_dot_task/{task_id}/
-├── first_frame.png          # Initial state: numbered dots (REQUIRED)
-├── final_frame.png          # Final state: dots with connecting lines (REQUIRED)
-├── prompt.txt               # Task instructions (REQUIRED)
-└── ground_truth.mp4         # Solution video showing connection process (OPTIONAL)
-```
-
-### Example Output
-
-- **first_frame.png**: Shows 5 dots labeled 1-5 scattered on a white canvas
-- **final_frame.png**: Shows the same dots with red lines connecting 1→2→3→4→5
-- **prompt.txt**: "Connect the dots in numerical order by drawing lines between them. Start from dot 1 and continue sequentially until all dots are connected."
-- **ground_truth.mp4**: Animated video showing each line being drawn sequentially
-
----
-
-## ⚙️ Configuration
-
-All configuration is done through `src/config.py`. You can customize:
-
-### Task Parameters
-
-- `num_dots`: Number of dots in the puzzle (default: 5, range: 3-15)
-- `dot_radius`: Size of each dot in pixels (default: 8, range: 5-20)
-- `line_width`: Thickness of connecting lines (default: 3, range: 2-5)
-- `show_numbers`: Whether to display numbers on dots (default: True)
-- `connection_type`: How dots are connected - `"sequential"`, `"path"`, or `"random"` (default: "sequential")
-
-### Visual Settings
-
-- `dot_color`: RGB color of dots (default: (50, 50, 200) - blue)
-- `line_color`: RGB color of connecting lines (default: (200, 50, 50) - red)
-- `background_color`: RGB background color (default: (255, 255, 255) - white)
-- `image_size`: Canvas dimensions (default: (512, 512))
-
-### Video Settings
-
-- `generate_videos`: Whether to create solution videos (default: True)
-- `video_fps`: Frame rate for videos (default: 10)
-
-### Generation Settings
-
-- `num_samples`: Number of tasks to generate
-- `domain`: Task domain name (default: "dot_to_dot")
-- `random_seed`: Seed for reproducibility
-- `output_dir`: Output directory path
-
----
-
-## 🎯 Usage Examples
-
-### Basic Generation
-
-Generate 50 dot-to-dot tasks with default settings:
+### Generate Data
 
 ```bash
-python examples/generate.py --num-samples 50
-```
+# Generate 100 samples
+python examples/generate.py --num-samples 100
 
-### Custom Output Directory
-
-Save tasks to a custom location:
-
-```bash
-python examples/generate.py --num-samples 100 --output data/my_tasks
-```
-
-### Reproducible Generation
-
-Use a seed for reproducible results:
-
-```bash
+# Generate with specific seed
 python examples/generate.py --num-samples 100 --seed 42
-```
 
-### Without Videos
-
-Generate tasks without solution videos (faster):
-
-```bash
+# Generate without videos
 python examples/generate.py --num-samples 100 --no-videos
+
+# Custom output directory
+python examples/generate.py --num-samples 100 --output data/my_output
 ```
 
-### Custom Configuration
+### Command-Line Options
 
-Modify `src/config.py` to change default parameters:
+| Argument | Type | Description | Default |
+|----------|------|-------------|---------|
+| `--num-samples` | int | Number of samples to generate | 100 |
+| `--seed` | int | Random seed for reproducibility | Random |
+| `--output` | str | Output directory | data |
+| `--no-videos` | flag | Skip video generation | False |
 
-```python
-class TaskConfig(GenerationConfig):
-    num_dots: int = Field(default=10)  # Generate puzzles with 10 dots
-    dot_color: tuple[int, int, int] = Field(default=(255, 0, 0))  # Red dots
-    connection_type: str = Field(default="path")  # Use path connection
+---
+
+## 📖 Task Example
+
+### Prompt
+
+```
+The scene shows 5 numbered dots scattered across the image. Connect the dots in numerical order (1→2→3→4→5) by drawing red straight lines between them, one line at a time in sequence.
 ```
 
----
+### Visual
 
-## 🎨 Connection Types
-
-The generator supports different connection patterns:
-
-1. **Sequential** (default): Connect dots in strict numerical order (1→2→3→4→5)
-2. **Path**: Connect dots following a path that visits each exactly once
-3. **Random**: Random connection order (still numbered for clarity)
-
----
-
-## 📝 Prompt Types
-
-The generator includes multiple prompt templates:
-
-- **default**: General instructions for connecting dots
-- **sequential**: Instructions emphasizing sequential order
-- **path**: Instructions about creating a continuous path
-- **shape**: Instructions about revealing a hidden shape
-
-Prompts are randomly selected for each task to add variety.
+<table>
+<tr>
+  <td align="center"><img src="samples/O-34_first_0.png" width="300"/></td>
+  <td align="center"><img src="samples/O-34_video_0.gif" width="300"/></td>
+  <td align="center"><img src="samples/O-34_final_0.png" width="300"/></td>
+</tr>
+<tr>
+  <td align="center"><b>Initial Frame</b><br/>Numbered dots scattered on canvas</td>
+  <td align="center"><b>Animation</b><br/>Lines drawn sequentially connecting dots</td>
+  <td align="center"><b>Final Frame</b><br/>All dots connected in order</td>
+</tr>
+</table>
 
 ---
 
-## 🔧 Advanced Usage
+## 📖 Task Description
 
-### Programmatic Generation
+### Objective
 
-```python
-from pathlib import Path
-from src import TaskGenerator, TaskConfig
+Connect numbered dots in sequential order by drawing straight lines between consecutive dots, creating a continuous path from dot 1 to the final dot.
 
-# Configure generator
-config = TaskConfig(
-    num_samples=10,
-    num_dots=7,
-    dot_color=(0, 100, 200),
-    generate_videos=True,
-    output_dir=Path("output/tasks")
-)
+### Task Setup
 
-# Generate tasks
-generator = TaskGenerator(config)
-tasks = generator.generate_dataset()
+- **Multiple Dots**: 4-8 numbered dots scattered across the canvas (varies per task)
+- **Dot Properties**: Radius 45 pixels, numbered from 1 to N
+- **Line Properties**: Width 5 pixels, bright red color for visibility
+- **Number Display**: White numbers on dots for clear identification
+- **Color Variety**: Random colors for dots from a vibrant palette
+- **Sequential Connection**: Lines drawn in strict numerical order
+- **Scattered Layout**: Dots positioned randomly across canvas
 
-# Tasks are now available as TaskPair objects
-for task in tasks:
-    print(f"Task {task.task_id}: {task.prompt}")
+### Key Features
+
+- **Sequential reasoning**: Tests ability to follow numerical order
+- **Number recognition**: Identifying and ordering numbered elements
+- **Path planning**: Understanding how to connect discrete points
+- **Line drawing**: Creating straight lines between points
+- **Order dependency**: Must connect in correct sequence
+- **Visual tracking**: Following numbered sequence across space
+- **Completion verification**: Ensuring all consecutive pairs are connected
+- **Step-by-step execution**: Drawing one line at a time in order
+
+---
+
+## 📦 Data Format
+
+```
+data/dot_to_dot_task/
+├── dot_to_dot_0000/
+│   ├── first_frame.png          # Initial state (numbered dots)
+│   ├── final_frame.png          # Final state (dots connected)
+│   ├── prompt.txt               # Task instructions with dot count
+│   └── ground_truth.mp4         # Solution video (16 fps)
+├── dot_to_dot_0001/
+│   └── ...
 ```
 
----
-
-## 📊 Task Statistics
-
-After generation, you can find statistics about your dataset:
-
-- Total number of tasks generated
-- Distribution of connection types
-- Average number of dots per task
-- Video generation success rate
+**File specifications**: Images are 1024×1024 PNG. Videos are MP4 at 16 fps, variable duration based on number of connections.
 
 ---
 
-## 🤝 Contributing
+## 🏷️ Tags
 
-Contributions are welcome! Areas for improvement:
-
-- Additional connection patterns (geometric shapes, letters, etc.)
-- Difficulty levels (easy/medium/hard based on dot count and arrangement)
-- Custom dot shapes and styles
-- Multi-frame intermediate states
-- Export formats (JSON, COCO, etc.)
+`sequential-reasoning` `pattern-completion` `number-ordering` `path-planning` `line-drawing` `visual-tracking` `order-dependency`
 
 ---
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
