@@ -73,7 +73,7 @@ The scene shows 5 numbered dots scattered across the image. Connect the dots in 
 <table>
 <tr>
   <td align="center"><img src="samples/O-34_first_0.png" width="250"/></td>
-  <td align="center"><img src="samples/O-34_video_0.gif" width="400"/></td>
+  <td align="center"><img src="samples/O-34_video_0.gif" width="320"/></td>
   <td align="center"><img src="samples/O-34_final_0.png" width="250"/></td>
 </tr>
 <tr>
