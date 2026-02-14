@@ -65,7 +65,8 @@ python examples/generate.py --num-samples 100 --output data/my_output
 ### Prompt
 
 ```
-The scene shows 5 numbered dots scattered across the image. Connect the dots in numerical order (1→2→3→4→5) by drawing red straight lines between them, one line at a time in sequence.
+The scene shows 5 numbered dots scattered across the image. Connect the dots in numerical order (1→2→3→...→5) by drawing red straight lines between them, one line at a time in sequence.
+
 ```
 
 ### Visual
