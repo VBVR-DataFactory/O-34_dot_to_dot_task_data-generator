@@ -44,7 +44,7 @@ class VideoGenerator:
             # H264: Standard notation
             # X264: Open-source implementation
             # mp4v: Fallback (MPEG-4 Part 2)
-            self.codecs = ['avc1', 'H264', 'X264', 'mp4v']
+            self.codecs = ['mp4v', 'XVID']
             self.extension = '.mp4'
         else:
             self.codecs = ['XVID']

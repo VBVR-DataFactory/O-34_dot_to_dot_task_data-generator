@@ -10,7 +10,7 @@ import random
 import math
 import tempfile
 from pathlib import Path
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Any
 from PIL import Image, ImageDraw, ImageFont
 
 from core import BaseGenerator, TaskPair, ImageRenderer
@@ -53,15 +53,73 @@ class TaskGenerator(BaseGenerator):
         # Generate prompt with task data
         prompt = get_prompt(task_data=task_data)
         
+        # Build objects metadata
+        objects = self._build_objects_metadata(task_data)
+        
+        # Build task_data with object-centric metadata
+        optimized_task_data = {
+            "num_dots": task_data["num_dots"],
+            "connection_type": task_data["connection_type"],
+            "line_color": list(task_data["line_color"]),
+            "objects": objects
+        }
+        
+        # Build metadata
+        metadata = self._build_metadata(task_id, optimized_task_data)
+        
+        
+        
         return TaskPair(
             task_id=task_id,
             domain=self.config.domain,
             prompt=prompt,
             first_image=first_image,
             final_image=final_image,
-            ground_truth_video=video_path
+            ground_truth_video=video_path,
+            metadata=metadata
         )
     
+    # ══════════════════════════════════════════════════════════════════════════
+    #  METADATA BUILDING
+    # ══════════════════════════════════════════════════════════════════════════
+
+    def _build_objects_metadata(self, task_data: dict) -> List[Dict[str, Any]]:
+        """
+        Build objects metadata with all dots as individual objects.
+        
+        Args:
+            task_data: Task data dictionary containing dots information
+        
+        Returns:
+            List of objects with their properties
+        """
+        objects = []
+        points = task_data["points"]
+        connection_order = task_data["connection_order"]
+        dot_colors = task_data["dot_colors"]
+        
+        for idx, (x, y) in enumerate(points):
+            # Find the number label for this dot (1-indexed)
+            position_in_order = connection_order.index(idx)
+            dot_number = position_in_order + 1
+            
+            # Find the next dot index in connection order (if not the last)
+            next_dot_index = None
+            if position_in_order < len(connection_order) - 1:
+                next_dot_index = connection_order[position_in_order + 1]  # Next dot in connection order
+            
+            objects.append({
+                "symbol": "dot",
+                "index": idx,  # 0-indexed position in points list
+                "number": dot_number,  # 1-indexed number in connection order
+                "center": [x, y],
+                "color": list(dot_colors[idx]),
+                "radius": self.config.dot_radius,
+                "next_dot_index": next_dot_index  # Index of next dot to connect to, or None if last
+            })
+        
+        return objects
+
     # ══════════════════════════════════════════════════════════════════════════
     #  TASK DATA GENERATION
     # ══════════════════════════════════════════════════════════════════════════

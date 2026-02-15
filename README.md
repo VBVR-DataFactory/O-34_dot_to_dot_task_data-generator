@@ -66,9 +66,7 @@ python examples/generate.py --num-samples 100 --output data/my_output
 
 ```
 The scene shows 5 numbered dots scattered across the image. Connect the dots in numerical order (1→2→3→...→5) by drawing red straight lines between them, one line at a time in sequence.
-
 ```
-
 ### Visual
 
 <table>
@@ -118,15 +116,14 @@ Connect numbered dots in sequential order by drawing straight lines between cons
 ## 📦 Data Format
 
 ```
-data/dot_to_dot_task/
-├── dot_to_dot_0000/
-│   ├── first_frame.png          # Initial state (numbered dots)
-│   ├── final_frame.png          # Final state (dots connected)
-│   ├── prompt.txt               # Task instructions with dot count
-│   └── ground_truth.mp4         # Solution video (16 fps)
-├── dot_to_dot_0001/
-│   └── ...
+data/questions/dot-to-dot_connection_task/dot-to-dot_connection_00000000/
+├── first_frame.png      # Initial state (numbered dots)
+├── final_frame.png      # Final state (dots connected)
+├── prompt.txt           # Task instructions with dot count
+├── ground_truth.mp4     # Solution video (16 fps)
+└── question_metadata.json # Task metadata
 ```
+
 
 **File specifications**: Images are 1024×1024 PNG. Videos are MP4 at 16 fps, variable duration based on number of connections.
 
