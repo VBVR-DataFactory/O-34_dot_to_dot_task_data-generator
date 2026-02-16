@@ -12,7 +12,7 @@ Each sample pairs a **task** (first frame + prompt describing what needs to happ
 |----------|-------|
 | **Task ID** | O-34 |
 | **Task** | Dot-to-Dot Connection |
-| **Category** | Sequential Reasoning/Pattern Completion |
+| **Category** | Knowledge |
 | **Resolution** | 1024×1024 px |
 | **FPS** | 16 fps |
 | **Duration** | Variable |
