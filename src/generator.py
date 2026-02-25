@@ -367,26 +367,30 @@ class TaskGenerator(BaseGenerator):
     
     def _get_font(self, size: int = 20) -> ImageFont.FreeTypeFont:
         """Get a font for rendering numbers."""
-        try:
-            # Try to load a system font
-            font_paths = [
-                "/System/Library/Fonts/Supplemental/Arial.ttf",
-                "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-                "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-                "/Library/Fonts/Arial.ttf",
-            ]
-            
-            for font_path in font_paths:
-                if Path(font_path).exists():
-                    return ImageFont.truetype(font_path, size)
-        except:
-            pass
-        
-        # Fallback to default font
-        try:
-            return ImageFont.truetype("arial.ttf", size)
-        except:
-            return ImageFont.load_default()
+        font_candidates = [
+            # Bundled in Docker image - guaranteed to exist in Lambda
+            "/opt/fonts/DejaVuSans-Bold.ttf",
+            "/opt/fonts/DejaVuSans.ttf",
+            # Amazon Linux 2 (Lambda) - RPM convention, no truetype/ subdir
+            "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+            # Ubuntu/Debian convention (kept as fallback)
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            # macOS
+            "/System/Library/Fonts/Supplemental/Arial.ttf",
+            "/Library/Fonts/Arial.ttf",
+            # bare name - let Pillow/FreeType search
+            "DejaVuSans-Bold.ttf",
+            "DejaVuSans.ttf",
+            "arial.ttf",
+        ]
+        for font_path in font_candidates:
+            try:
+                return ImageFont.truetype(font_path, size)
+            except (OSError, IOError):
+                continue
+        return ImageFont.load_default()
     
     # ══════════════════════════════════════════════════════════════════════════
     #  VIDEO GENERATION
