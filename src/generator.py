@@ -131,57 +131,93 @@ class TaskGenerator(BaseGenerator):
             num_dots = random.randint(self.config.min_dots, self.config.max_dots)
         else:
             num_dots = self.config.num_dots
-        
+
         width, height = self.config.image_size
-        
-        # Generate random points with padding to avoid edges
         margin = max(self.config.dot_radius * 3, 40)
-        points = []
-        
-        for _ in range(num_dots):
-            attempts = 0
-            while attempts < 100:
-                x = random.randint(margin, width - margin)
-                y = random.randint(margin, height - margin)
-                
-                # Check minimum distance from existing points
-                too_close = False
-                for px, py in points:
-                    dist = math.sqrt((x - px)**2 + (y - py)**2)
-                    if dist < margin * 1.5:
-                        too_close = True
+
+        for _attempt in range(400):
+            points = []
+            for _ in range(num_dots):
+                pt_attempts = 0
+                while pt_attempts < 100:
+                    x = random.randint(margin, width - margin)
+                    y = random.randint(margin, height - margin)
+                    too_close = False
+                    for px, py in points:
+                        dist = math.sqrt((x - px) ** 2 + (y - py) ** 2)
+                        if dist < margin * 1.5:
+                            too_close = True
+                            break
+                    if not too_close:
+                        points.append((x, y))
                         break
-                
-                if not too_close:
-                    points.append((x, y))
-                    break
-                attempts += 1
-            
-            if attempts >= 100:
-                # Fallback: use grid layout if random placement fails
-                grid_size = int(math.ceil(math.sqrt(num_dots)))
-                idx = len(points)
-                row = idx // grid_size
-                col = idx % grid_size
-                x = margin + (width - 2 * margin) * col / (grid_size - 1) if grid_size > 1 else width // 2
-                y = margin + (height - 2 * margin) * row / (grid_size - 1) if grid_size > 1 else height // 2
-                points.append((int(x), int(y)))
-        
-        # Determine connection order based on connection_type
-        connection_order = self._determine_connection_order(points)
-        
-        # Assign colors to dots
-        dot_colors = self._assign_dot_colors(num_dots)
-        
-        return {
-            "points": points,
-            "connection_order": connection_order,
-            "connection_type": self.config.connection_type,
-            "num_dots": num_dots,
-            "dot_colors": dot_colors,  # Now a list of colors, one per dot
-            "line_color": self.config.line_color,
-            "background_color": self.config.background_color,
-        }
+                    pt_attempts += 1
+                if pt_attempts >= 100:
+                    grid_size = int(math.ceil(math.sqrt(num_dots)))
+                    idx = len(points)
+                    row = idx // grid_size
+                    col = idx % grid_size
+                    x = margin + (width - 2 * margin) * col / (grid_size - 1) if grid_size > 1 else width // 2
+                    y = margin + (height - 2 * margin) * row / (grid_size - 1) if grid_size > 1 else height // 2
+                    points.append((int(x), int(y)))
+
+            connection_order = self._determine_connection_order(points)
+            if self._connection_polylines_respect_other_dots(points, connection_order):
+                dot_colors = self._assign_dot_colors(num_dots)
+                return {
+                    "points": points,
+                    "connection_order": connection_order,
+                    "connection_type": self.config.connection_type,
+                    "num_dots": num_dots,
+                    "dot_colors": dot_colors,
+                    "line_color": self.config.line_color,
+                    "background_color": self.config.background_color,
+                }
+
+        raise RuntimeError("Could not sample dot layout with non-crossing segments")
+
+    def _point_segment_distance_sq(
+        self,
+        px: float,
+        py: float,
+        ax: float,
+        ay: float,
+        bx: float,
+        by: float,
+    ) -> float:
+        """Squared distance from point P to segment AB."""
+        abx, aby = bx - ax, by - ay
+        apx, apy = px - ax, py - ay
+        ab_len_sq = abx * abx + aby * aby
+        if ab_len_sq < 1e-6:
+            return (px - ax) ** 2 + (py - ay) ** 2
+        t = max(0.0, min(1.0, (apx * abx + apy * aby) / ab_len_sq))
+        cx, cy = ax + t * abx, ay + t * aby
+        return (px - cx) ** 2 + (py - cy) ** 2
+
+    def _connection_polylines_respect_other_dots(
+        self,
+        points: List[Tuple[int, int]],
+        connection_order: List[int],
+    ) -> bool:
+        """
+        Each segment between consecutive dots in order must not pass too close to
+        any other numbered dot (avoids ambiguous 'line through another label').
+        """
+        r = self.config.dot_radius + self.config.line_width + 6
+        r_sq = r * r
+        n = len(connection_order)
+        for i in range(n - 1):
+            a = connection_order[i]
+            b = connection_order[i + 1]
+            ax, ay = points[a]
+            bx, by = points[b]
+            for j, (px, py) in enumerate(points):
+                if j in (a, b):
+                    continue
+                if self._point_segment_distance_sq(px, py, ax, ay, bx, by) < r_sq:
+                    return False
+        return True
     
     def _assign_dot_colors(self, num_dots: int) -> List[Tuple[int, int, int]]:
         """Assign colors to dots based on configuration."""
